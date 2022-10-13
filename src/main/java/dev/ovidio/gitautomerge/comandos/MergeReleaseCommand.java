@@ -1,53 +1,36 @@
 package dev.ovidio.gitautomerge.comandos;
 
-import dev.ovidio.gitautomerge.exception.ArgumentoInvalidoException;
+import dev.ovidio.gitautomerge.exception.BaseException;
+import dev.ovidio.gitautomerge.git.model.RepositorioGit;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-
-public class MergeReleaseCommand extends Command {
-
-    @Override
-    public String getDescricao() {
-        return """
-             gitAutoMerge merge-release "diretorio/repositorio"
-             
-             Usado para realizar o merge automatico da release menor para a maior exemplo:
-             merge para 010100 caso já exista branch 010200 e 020000 e develop
-             ira fazer um merge da 010100 -> 010200 -> 020000 -> develop
-             """;
-    }
+import java.nio.file.Path;
 
 
+@Command(name = "mergeRelease",
+        description = """
+                Realiza o merge automatico em todas as versões maiores do que a versão de origem
+                """,
+        aliases = {"ma"})
+public class MergeReleaseCommand extends ComandoBase {
 
-    @Override
-    protected void execComando(String[] args) {
-        var path = (String) Array.get(args,1);
-        File repoDir = new File(path);
-        if (!repoDir.isDirectory()){
-            throw new ArgumentoInvalidoException("Diretorio informado invalido");
-        }
-        try {
-            System.out.println(repoDir.getAbsolutePath());
-            var p = Runtime.getRuntime().exec("git branch --list -a origin/release/*",new String[]{},repoDir);
-            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String s;
+    @Option(names = {"--git-dir","-g"}, descriptionKey = "GITDIR", required = true)
+    File gitDir;
 
-            while ((s = br.readLine()) != null)
-                System.out.println("line: " + s);
-
-            p.waitFor();
-            System.out.println ("exit: " + p.exitValue());
-            System.out.println(s);
-        } catch (Exception e) {
-            throw new ArgumentoInvalidoException("Diretorio informado invalido",e);
-        }
-    }
+    @Option(
+            names = {"-o","--branch-origem"},
+            description = "Branch da versão de origem, a menor versão que sera usada para o merge automatico",
+            required = true)
+    private String branchOrigem;
 
     @Override
-    protected int quantidadeArgs() {
-        return 2;
+    public Integer executa() throws BaseException {
+        RepositorioGit repositorioGit = new RepositorioGit(gitDir);
+        repositorioGit.autoMergeBranchs(branchOrigem);
+        return 0;
     }
 }

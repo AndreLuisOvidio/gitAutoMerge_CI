@@ -14,6 +14,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <picocli.version>4.6.3</picocli.version>
   </properties>
 
 
@@ -22,6 +23,17 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>1.18.24</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
+      <version>${picocli.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli-codegen</artifactId>
+      <version>${picocli.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>

@@ -1,22 +1,27 @@
 package dev.ovidio.gitautomerge.comandos;
 
-public class VerificaConflitoCommand extends Command {
-    @Override
-    public String getDescricao() {
-        return """
-            gitAutoMerge verifica-conflito "diretorio/repositorio"
-            
-            Usado para verificar se não ocorrera nenhum conflito no comando merge-release
-            """;
-    }
+import dev.ovidio.gitautomerge.exception.BaseException;
+import picocli.CommandLine;
+
+@CommandLine.Command(
+        name = "verificaConflito",
+        aliases = {"vf"},
+        description = """
+                Verifica se não havera nenhum conflito na execução do comando mergeRelease
+                """
+)
+public class VerificaConflitoCommand extends ComandoBase {
+
+
+    @CommandLine.Option(
+            names = {"-o","--versao"},
+            description = "Versão de origem, a menor versão que sera usada para o merge automatico",
+            required = true)
+    private String versaoOrigem;
 
     @Override
-    protected void execComando(String[] args) {
-        System.out.println("verifica-conflito");
-    }
-
-    @Override
-    protected int quantidadeArgs() {
-        return 2;
+    public Integer executa() throws BaseException {
+        System.out.println("verificaConflito");
+        return 0;
     }
 }
