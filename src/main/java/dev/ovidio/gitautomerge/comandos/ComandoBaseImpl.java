@@ -2,6 +2,10 @@ package dev.ovidio.gitautomerge.comandos;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
 
 @Command(
         name = "auto-merge",
@@ -15,8 +19,11 @@ import picocli.CommandLine.Command;
 )
 public class ComandoBaseImpl extends ComandoBase{
 
+    @Spec
+    CommandSpec spec;
+
     @Override
     public Integer executa() {
-        return 0;
+        throw new ParameterException(spec.commandLine(), "Missing required subcommand");
     }
 }

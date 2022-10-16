@@ -1,36 +1,54 @@
 package dev.ovidio.gitautomerge.git.integration;
 
-import dev.ovidio.gitautomerge.exception.ArgumentoInvalidoException;
 import dev.ovidio.gitautomerge.exception.BaseException;
-import picocli.CommandLine;
 import picocli.CommandLine.Help.Ansi;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.util.Arrays;
-import java.util.Collections;
 
 public class GitCommandExecutor {
 
     private final File diretorioGitRepo;
 
-    public GitCommandExecutor(File diretorioGitRepo) throws BaseException {
+    public GitCommandExecutor(File diretorioGitRepo, String gitName, String gitEmail) throws BaseException {
         this.diretorioGitRepo = diretorioGitRepo;
         if(!isGitRepository()){
             throw new BaseException("Diretorio não é um repositorio git: "+diretorioGitRepo.getAbsolutePath());
+        }
+        verificaGitConfig();
+    }
+
+    private void verificaGitConfig(){
+        var configEmail = this.executaComando("config","--get user.email").getRetorno();
+        var configName = this.executaComando("config","--get user.name").getRetorno();
+        String configErro = "";
+        if(configEmail.equals("null")){
+            configErro += "git 'user.email' não configurado\n";
+        }
+        if(configName.equals("null")){
+            configErro += "git 'user.name' não configurado\n";
+        }
+        if(!configErro.isBlank()){
+            configErro += "Necessario configurar dentro do repossitorio sem --global\n";
+            throw new BaseException(configErro);
         }
     }
 
     private GitCommandResponse executaComando(String comando, String ... args) throws BaseException {
         StringBuilder comandoGit = new StringBuilder("git ");
-        comandoGit.append(" branch ");
+        comandoGit.append(" %s ".formatted(comando));
         if(args !=null ){
             Arrays.stream(args)
                     .map(arg -> " "+arg+" ")
                     .forEach(comandoGit::append);
         }
-        System.out.println("Executando comando ...: "+comandoGit.toString());
+        System.out.println(
+                Ansi.AUTO.string(
+                "@|fg(blue) Executando comando ...: %s|@")
+                        .formatted(comandoGit.toString())
+        );
         try {
             var p = Runtime.getRuntime().exec(
                     comandoGit.toString(),
@@ -50,21 +68,17 @@ public class GitCommandExecutor {
             GitCommandResponse response = new GitCommandResponse();
             response.setRetorno(saidaConsole.toString());
             response.setExitStatusCode(p.exitValue());
-
+            saidaConsole = saidaConsole.toString().equals("null") ? new StringBuilder("") : saidaConsole;
             String printResult;
             if(p.exitValue() == 0){
                 printResult = Ansi.AUTO.string("""
                         @|fg(green) Comando executado com sucesso saida:|@
-                        --------
                         @|fg(green) %s|@
-                        --------
                         """.formatted(saidaConsole));
             }else{
                 printResult = Ansi.AUTO.string("""
-                        @|fg(red) Comando executado com sucesso saida:|@
-                        --------
+                        @|fg(red) Comando executado com erro saida:|@
                         @|fg(red) %s|@
-                        --------
                         """.formatted(saidaConsole));
             }
             System.out.println(printResult);
@@ -72,10 +86,6 @@ public class GitCommandExecutor {
         } catch (Exception e) {
             throw new BaseException("Diretorio invalido: "+diretorioGitRepo.getAbsolutePath(),e);
         }
-    }
-
-    public GitCommandResponse branch(String ... args) throws BaseException {
-        return executaComando("branch",args);
     }
 
     private boolean isGitRepository() throws BaseException {
@@ -86,6 +96,20 @@ public class GitCommandExecutor {
         return branch().getExitStatusCode() == 0;
     }
 
+    public GitCommandResponse branch(String ... args) throws BaseException {
+        return executaComando("branch",args);
+    }
 
+    public GitCommandResponse checkout(String ... args){
+        return executaComando("checkout",args);
+    }
+
+    public GitCommandResponse merge(String ... args){
+        return executaComando("merge",args);
+    }
+
+    public GitCommandResponse push(String ... args){
+        return executaComando("push",args);
+    }
 
 }

@@ -7,9 +7,22 @@ import lombok.Data;
 public class Branch {
     private String branchName;
 
+    private TipoOrigem origemBranch;
+
     public Branch(String branchName){
+        this.origemBranch = TipoOrigem.LOCAL;
         branchName = branchName.trim().replace("remotes/","");
-        this.branchName = branchName;
+        if(branchName.startsWith("origin/")){
+            this.origemBranch = TipoOrigem.REMOTA;
+        }
+        this.branchName = branchName.replace("origin/","");
+    }
+
+    public String getFullBranchName() {
+        if(TipoOrigem.REMOTA.equals(origemBranch)){
+            return "origin/"+branchName;
+        }
+        return branchName;
     }
 
 }
