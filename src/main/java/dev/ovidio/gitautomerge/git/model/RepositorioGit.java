@@ -1,6 +1,7 @@
 package dev.ovidio.gitautomerge.git.model;
 
 import dev.ovidio.gitautomerge.exception.BaseException;
+import dev.ovidio.gitautomerge.git.funcoes.GitAutoMergeRelease;
 import dev.ovidio.gitautomerge.git.integration.GitCommandExecutor;
 
 import java.io.File;
@@ -12,10 +13,12 @@ import java.util.Objects;
 public class RepositorioGit {
 
     private GitCommandExecutor git;
+    private GitAutoMergeRelease gitAutoMerge;
 
     public RepositorioGit(File repostorioRootPath, String gitName, String gitEmail) throws BaseException {
         System.out.println("Abrindo repositorio git: "+repostorioRootPath.getAbsolutePath());
         git = new GitCommandExecutor(repostorioRootPath,gitName,gitEmail);
+        this.gitAutoMerge = new GitAutoMergeRelease(this);
     }
 
     public void autoMergeBranchs(String branchOrigemName, Integer versaoOrigem, String commitMessage){
@@ -59,7 +62,7 @@ public class RepositorioGit {
         return commitMessage.replace(":versao_release", versao.toString());
     }
 
-    private List<ReleaseBranch> recuperaBranchReleaseAbertas(){
+    public List<ReleaseBranch> recuperaBranchReleaseAbertas(){
         var response = git.branch(" --list -a origin/release/*");
         return Arrays.stream(response.getRetorno().split("\n"))
                 .map(ReleaseBranch::new)
