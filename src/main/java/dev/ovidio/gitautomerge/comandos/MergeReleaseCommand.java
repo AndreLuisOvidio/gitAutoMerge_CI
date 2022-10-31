@@ -11,6 +11,9 @@ import java.io.File;
 @Command(name = "mergeRelease",
         description = """
                 Realiza o merge automatico em todas as versões maiores do que a versão de origem
+                Depereciado:
+                Ainda não alterei o nome dele, porem o merge automatico não existira mais como função
+                somente ira testar se ao fazer o merge para as branch não havera conflito
                 """,
         aliases = {"ma"}
 )
@@ -23,25 +26,13 @@ public class MergeReleaseCommand extends ComandoBase {
             names = {"--branch-origem"},
             description = "Branch da versão de origem, a menor versão que sera usada para o merge automatico",
             required = true)
-    private String branchOrigem;
+    public String branchOrigem;
 
     @Option(
             names = {"--versao-origem"},
             description = "Branch da versão de origem, a menor versão que sera usada para o merge automatico",
             required = true)
-    private Integer versaoOrigem;
-
-    @Option(
-            names={"-m","--message"},
-            description = """
-                    Menssagem do commit de merge parametros permitidos:
-                    :branch_origem
-                    :branch_release
-                    :versao_release
-                    
-                    Default="Merge branch ':branch_origem' into ':branch_release'"
-                    """)
-    private String commitMessage = "Merge branch ':branch_origem' into ':branch_release'";
+    public Integer versaoOrigem;
 
     @Option(
             names={"--git-name"},
@@ -53,9 +44,6 @@ public class MergeReleaseCommand extends ComandoBase {
             description = "Email utilizado no commit do git default = 'automerge@automerge.com'")
     private String gitEmail = "automerge@automerge.com";
 
-    public MergeReleaseCommand() {
-    }
-
     @Override
     public Integer executa() throws BaseException {
         RepositorioGit repositorioGit = new RepositorioGit(gitDir,gitName,gitEmail);
@@ -63,7 +51,7 @@ public class MergeReleaseCommand extends ComandoBase {
             System.err.println("Branch origem não existe");
             return 1;
         }
-        repositorioGit.autoMergeBranchs(branchOrigem, versaoOrigem, commitMessage);
+        repositorioGit.verificaConflitoAutoMergeBranchs(branchOrigem, versaoOrigem);
         return 0;
     }
 

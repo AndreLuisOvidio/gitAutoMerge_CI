@@ -17,7 +17,17 @@ public class GitCommandExecutor {
         if(!isGitRepository()){
             throw new BaseException("Diretorio não é um repositorio git: "+diretorioGitRepo.getAbsolutePath());
         }
+        configuraNameEmail(gitName, gitEmail);
         verificaGitConfig();
+    }
+
+    private void configuraNameEmail(String gitName, String gitEmail){
+        if(gitName != null && !gitName.isBlank()){
+            this.executaComando("config","user.name",gitName);
+        }
+        if(gitEmail != null && !gitEmail.isBlank()){
+            this.executaComando("config","user.email",gitEmail);
+        }
     }
 
     private void verificaGitConfig(){
@@ -110,6 +120,10 @@ public class GitCommandExecutor {
 
     public GitCommandResponse push(String ... args){
         return executaComando("push",args);
+    }
+
+    public GitCommandResponse cherryPick(String ... args) {
+        return executaComando("cherry-pick",args);
     }
 
 }

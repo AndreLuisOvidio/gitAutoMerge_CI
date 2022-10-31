@@ -13,8 +13,9 @@ import picocli.CommandLine.Spec;
                 Programa destinado a automatizar o merge em release de versão
                 """,
         subcommands = {
-                MergeReleaseCommand.class,
-                VerificaConflitoCommand.class
+                //VerificaConflitoCommand.class,
+                CherryPickCommand.class,
+                MergeReleaseCommand.class
         }
 )
 public class ComandoBaseImpl extends ComandoBase{

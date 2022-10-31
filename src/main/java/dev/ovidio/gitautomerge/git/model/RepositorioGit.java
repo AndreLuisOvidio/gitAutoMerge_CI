@@ -1,65 +1,52 @@
 package dev.ovidio.gitautomerge.git.model;
 
 import dev.ovidio.gitautomerge.exception.BaseException;
-import dev.ovidio.gitautomerge.git.funcoes.GitAutoMergeRelease;
+import dev.ovidio.gitautomerge.exception.CherryPickException;
+import dev.ovidio.gitautomerge.git.funcoes.GitAutoCherryPick;
+import dev.ovidio.gitautomerge.git.funcoes.GitVerificaConflitoAutoMerge;
 import dev.ovidio.gitautomerge.git.integration.GitCommandExecutor;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
 public class RepositorioGit {
 
     private GitCommandExecutor git;
-    private GitAutoMergeRelease gitAutoMerge;
+    private GitVerificaConflitoAutoMerge gitVerificaConflitoAutoMerge;
+    private GitAutoCherryPick gitAutoCherryPick;
 
     public RepositorioGit(File repostorioRootPath, String gitName, String gitEmail) throws BaseException {
         System.out.println("Abrindo repositorio git: "+repostorioRootPath.getAbsolutePath());
         git = new GitCommandExecutor(repostorioRootPath,gitName,gitEmail);
-        this.gitAutoMerge = new GitAutoMergeRelease(this);
+        this.gitVerificaConflitoAutoMerge = new GitVerificaConflitoAutoMerge(this);
+        this.gitAutoCherryPick = new GitAutoCherryPick(this);
     }
 
-    public void autoMergeBranchs(String branchOrigemName, Integer versaoOrigem, String commitMessage){
-        System.out.println("Inicio do merge automatico");
-        Branch branchAtual = recuperaBranchAtual();
-        Branch branchOrigem = findBranchByName(branchOrigemName);
-        List<ReleaseBranch> branches = recuperaBranchReleaseAbertas();
-        branches.stream()
-                .filter(b -> b.getVersao() >= versaoOrigem)
-                .sorted(Comparator.comparingInt(ReleaseBranch::getVersao))
-                .forEach(b -> {
-                    System.out.println(b);
-                    String mensagemCommit = trataMenssagemCommitMergeRelease(branchOrigem, b, commitMessage);
-                    mergeBranch(branchOrigem, b, mensagemCommit);
-                });
-        String mensagemCommit = trataMenssagemCommitMerge(branchOrigem,branchAtual,commitMessage,versaoOrigem);
-        mergeBranch(branchOrigem,branchAtual,mensagemCommit);
-        pushBranch(branchAtual);
-        branches.stream()
-                .forEach(this::pushBranch);
+    public void autoCherryPick(String commitId, Integer versaoOrigem){
+        gitAutoCherryPick.autoCherryPick(commitId,versaoOrigem);
     }
 
-    public void mergeBranch(Branch branchOrigem, Branch branchDestino, String commitMessage){
-        git.checkout("-B",branchDestino.getBranchName(),branchDestino.getFullBranchName());
-//        git.merge(branchOrigem.getFullBranchName(),"-m \""+commitMessage+"\"");
-        var response = git.merge(branchOrigem.getFullBranchName(),"--no-edit");
+    public void cherryPick(Branch branch,String commitId){
+        git.checkout("-B",branch.getBranchName(),branch.getFullBranchName());
+        var response = git.cherryPick("-m 1", commitId);
         if(response.getExitStatusCode() != 0){
-            throw new BaseException("Ocorreu algum problema no merge para branch: "+branchDestino.getFullBranchName());
+            git.cherryPick("--abort");
+            throw new CherryPickException("Ocorreu algum problema/conflito no cherry-pick para branch: "+branch.getFullBranchName());
         }
     }
 
-    private String trataMenssagemCommitMergeRelease(Branch branchOrigem, ReleaseBranch branchRelease, String commitMessage){
-        commitMessage = commitMessage.replace(":branch_origem", branchOrigem.getBranchName());
-        commitMessage = commitMessage.replace(":branch_release", branchRelease.getBranchName());
-        return commitMessage.replace(":versao_release", Integer.toString(branchRelease.getVersao()));
+    public void verificaConflitoAutoMergeBranchs(String branchOrigemName, Integer versaoOrigem){
+        gitVerificaConflitoAutoMerge.autoMergeBranchs(branchOrigemName,versaoOrigem);
     }
 
-    private String trataMenssagemCommitMerge(Branch branchOrigem, Branch branchDestino, String commitMessage, Integer versao){
-        commitMessage = commitMessage.replace(":branch_origem", branchOrigem.getBranchName());
-        commitMessage = commitMessage.replace(":branch_release", branchDestino.getBranchName());
-        return commitMessage.replace(":versao_release", versao.toString());
+    public boolean testeMergeBranch(Branch branchOrigem, Branch branchDestino){
+        git.checkout("-B",branchDestino.getBranchName(),branchDestino.getFullBranchName());
+//        git.merge(branchOrigem.getFullBranchName(),"-m \""+commitMessage+"\"");
+        var response = git.merge(branchOrigem.getFullBranchName(),"--no-edit --no-commit");
+        git.merge("--abort");
+        return response.getExitStatusCode() == 0;
     }
 
     public List<ReleaseBranch> recuperaBranchReleaseAbertas(){
