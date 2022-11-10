@@ -126,4 +126,8 @@ public class GitCommandExecutor {
         return executaComando("cherry-pick",args);
     }
 
+    public GitCommandResponse revParse(String ... args){
+        return executaComando("rev-parse",args);
+    }
+
 }

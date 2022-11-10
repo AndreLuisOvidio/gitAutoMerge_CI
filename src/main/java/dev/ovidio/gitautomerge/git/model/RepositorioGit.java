@@ -4,6 +4,7 @@ import dev.ovidio.gitautomerge.exception.BaseException;
 import dev.ovidio.gitautomerge.exception.CherryPickException;
 import dev.ovidio.gitautomerge.git.funcoes.GitAutoCherryPick;
 import dev.ovidio.gitautomerge.git.funcoes.GitVerificaConflitoAutoMerge;
+import dev.ovidio.gitautomerge.git.integration.CherryPickResponse;
 import dev.ovidio.gitautomerge.git.integration.GitCommandExecutor;
 
 import java.io.File;
@@ -28,13 +29,15 @@ public class RepositorioGit {
         gitAutoCherryPick.autoCherryPick(commitId,versaoOrigem);
     }
 
-    public void cherryPick(Branch branch,String commitId){
+    public CherryPickResponse cherryPick(Branch branch, String commitId){
         git.checkout("-B",branch.getBranchName(),branch.getFullBranchName());
         var response = git.cherryPick("-m 1", commitId);
         if(response.getExitStatusCode() != 0){
             git.cherryPick("--abort");
             throw new CherryPickException("Ocorreu algum problema/conflito no cherry-pick para branch: "+branch.getFullBranchName());
         }
+        var commitIdCherryPick = git.revParse("--verify HEAD");
+        return new CherryPickResponse(branch.getFullBranchName(), commitIdCherryPick.getRetorno());
     }
 
     public void verificaConflitoAutoMergeBranchs(String branchOrigemName, Integer versaoOrigem){
